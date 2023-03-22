@@ -124,8 +124,7 @@ celerybeat.pid
 .venv
 env/
 venv/
-.chalice/deployed/
-.chalice/deployments/
+.chalice/
 ENV/
 env.bak/
 venv.bak/
