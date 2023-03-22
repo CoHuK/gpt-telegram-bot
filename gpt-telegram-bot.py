@@ -1,9 +1,11 @@
 import os
+import json
 import openai
 import logging
+from chalice import Chalice
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, PicklePersistence
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Enable logging
 logging.basicConfig(
@@ -13,13 +15,18 @@ logger = logging.getLogger(__name__)
 
 # Load the API tokens from the .env file
 load_dotenv()
+
 TELEGRAM_API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ADMIN_ID = os.getenv('BOT_ADMIN_USER_ID')
 ALLOWED_USER_IDS = [ADMIN_ID]
+APP_NAME = "gpt-telegram-bot"
+LAMBDA_MESSAGE_HANDLER = "lambda-message-handler"
 
 # Initialize the OpenAI library
 openai.api_key = OPENAI_API_KEY
+
+app = Chalice(app_name=APP_NAME)
 
 async def allowed_only(update, allowed_list):
     user_id = update.message.from_user.id
@@ -73,7 +80,7 @@ async def handle_text(update: Update, context: CallbackContext):
     if await allowed_users_only(update):
         chatgpt_response = get_chatgpt_response(user_text, context.user_data["chat context"])
         logger.info("latest context is: " + str(context.user_data["chat context"]))
-        await update.message.reply_text(chatgpt_response)
+        await update.message.reply_text(text=chatgpt_response)
 
 # Function to get a response from ChatGPT-3.5
 def get_chatgpt_response(prompt, chat_context):
@@ -98,6 +105,23 @@ def main():
 
     # Start the bot
     application.run_polling()
+
+@app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)
+def message_handler(event, context):
+    application = Application.builder().token(TELEGRAM_API_TOKEN).build()
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('clear', clear))
+    application.add_handler(CommandHandler('add_user', add_user))
+    application.add_handler(CommandHandler('users', users))
+    application.add_handler(CommandHandler('delete_user', delete_user))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    try:
+        application.process_update(Update.de_json(json.loads(event["body"])))
+    except Exception as e:
+        logger.warning(e)
+        return {"statusCode": 500}
+
+    return {"statusCode": 200}
 
 if __name__ == '__main__':
     main()
