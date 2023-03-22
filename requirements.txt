@@ -1,4 +1,4 @@
 python-dotenv
 python-telegram-bot
 openai
-chalice
+asgiref

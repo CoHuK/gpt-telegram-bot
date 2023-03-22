@@ -2,13 +2,16 @@ import os
 import json
 import openai
 import logging
+import asyncio
+from asgiref.sync import async_to_sync
+from chalice import Chalice
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
 
@@ -90,18 +93,45 @@ def get_chatgpt_response(prompt, chat_context):
     chat_context.append({"role": "assistant", "content": response_text})
     return response_text
 
-def main():
-    application = Application.builder().token(TELEGRAM_API_TOKEN).build()
+app = Chalice(app_name=APP_NAME)
+application = Application.builder().token(TELEGRAM_API_TOKEN).build()
+application.add_handler(CommandHandler('start', start))
+application.add_handler(CommandHandler('clear', clear))
+application.add_handler(CommandHandler('add_user', add_user))
+application.add_handler(CommandHandler('users', users))
+application.add_handler(CommandHandler('delete_user', delete_user))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+print("Registered all the handlers")
 
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(CommandHandler('clear', clear))
-    application.add_handler(CommandHandler('add_user', add_user))
-    application.add_handler(CommandHandler('users', users))
-    application.add_handler(CommandHandler('delete_user', delete_user))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+@app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)
+def message_handler(event, context):
+    print("Try to initialise")
+    async_to_sync(application.initialize, force_new_loop=True)()
+    print("Got something from Telegram: " + str(event))
+    print("And some context: " + str(context))
+    try:
+        print("Trying to process the update")
+        if "message" in event["body"]:
+            print("Preparing the update")
+            async_to_sync(application.start)()
+            update = Update.de_json(data=json.loads(event["body"]), bot=application.bot)
+            async_to_sync(application.update_queue.put)(update)
+            print("Let's process the update: " + str(update))
+            async_to_sync(application.process_update)(update)
+            async_to_sync(application.stop)()
+            print("Update processed")
+        else:
+            print("Not a message event")
+    except Exception as e:
+        logger.warning(e)
+        print("Exception happened: " + e)
+        # async_to_sync(application.stop)()
+        return {"statusCode": 500}
+    # async_to_sync(application.stop)()
+    return {"statusCode": 200}
 
-    # Start the bot
-    application.run_polling()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     #main()
+#     message_handler({'body':'{"update_id":"1"}'},{})
+    
