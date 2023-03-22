@@ -27,8 +27,11 @@ async def start(update: Update, context: CallbackContext):
 
 async def clear(update: Update, context: CallbackContext):
     context.user_data["chat context"] = []
-    logger.warning("Context should be cleared by now: " + str(context.user_data["chat context"]))
-    
+    logger.info("Context should be cleared by now: " + str(context.user_data["chat context"]))
+  
+async def clear(update: Update, context: CallbackContext):
+    context.user_data["chat context"] = []
+    logger.warning("Context should be cleared by now: " + str(context.user_data["chat context"]))  
     
 # Function to handle text messages
 async def handle_text(update: Update, context: CallbackContext):
@@ -39,7 +42,7 @@ async def handle_text(update: Update, context: CallbackContext):
         logger.warning("latest context is: " + str(context.user_data["chat context"]))
         await update.message.reply_text(chatgpt_response)
     else:
-        update.message.reply_text("Sorry, you are not authorized to use this bot.")
+        await update.message.reply_text("Sorry, you are not authorized to use this bot.")
 
 # Function to get a response from ChatGPT-3.5
 def get_chatgpt_response(prompt, chat_context):
@@ -57,6 +60,7 @@ def main():
 
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('clear', clear))
+    application.add_handler(CommandHandler('add_user', add_user))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     # Start the bot
