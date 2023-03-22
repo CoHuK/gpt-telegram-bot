@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 TELEGRAM_API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+ALLOWED_USER_IDS = [os.getenv('BOT_ADMIN_USER_ID')]
 
 # Initialize the OpenAI library
 openai.api_key = OPENAI_API_KEY
@@ -32,9 +33,13 @@ async def clear(update: Update, context: CallbackContext):
 # Function to handle text messages
 async def handle_text(update: Update, context: CallbackContext):
     user_text = update.message.text
-    chatgpt_response = get_chatgpt_response(user_text, context.user_data["chat context"])
-    logger.warning("latest context is: " + str(context.user_data["chat context"]))
-    await update.message.reply_text(chatgpt_response)
+    user_id = update.message.from_user.id
+    if str(user_id) in ALLOWED_USER_IDS:
+        chatgpt_response = get_chatgpt_response(user_text, context.user_data["chat context"])
+        logger.warning("latest context is: " + str(context.user_data["chat context"]))
+        await update.message.reply_text(chatgpt_response)
+    else:
+        update.message.reply_text("Sorry, you are not authorized to use this bot.")
 
 # Function to get a response from ChatGPT-3.5
 def get_chatgpt_response(prompt, chat_context):
