@@ -1,0 +1,16 @@
+{
+  "version": "2.0",
+  "app_name": "gpt-telegram-bot",
+  "environment_variables": {
+    "OPENAI_API_KEY": "",
+    "TELEGRAM_API_TOKEN": "",
+    "BOT_ADMIN_USER_ID": "",
+    "DYNAMODB_TABLE_NAME": "",
+    "DYNAMODB_USERS_TABLE_NAME": ""
+  },
+  "stages": {
+    "dev": {
+      "api_gateway_stage": "api"
+    }
+  }
+}
