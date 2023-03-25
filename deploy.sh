@@ -90,6 +90,14 @@ if [ -z "$FUNCTION_URL" ]; then
 fi
 echo "Lambda Function URL: $FUNCTION_URL"
 
+"Add lambda:InvokeFunctionUrl permissions for Lambda function"
+aws lambda add-permission \
+  --function-name $LAMBDA_ARN \
+  --action lambda:InvokeFunctionUrl \
+  --principal "*" \
+  --function-url-auth-type "NONE" \
+  --statement-id url >/dev/null 2>&1 | echo "Permission lambda:InvokeFunctionUrl already added"
+
 # Attach policy to the existing role
 stage="dev"
 role_name="${APP_NAME}-${stage}"
