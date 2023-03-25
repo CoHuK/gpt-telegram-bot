@@ -126,7 +126,8 @@ env/
 venv/
 .chalice/deployments/
 .chalice/deployed/
-.chalice/config.json
+.chalice/*.json
+.chalice/*.backup
 ENV/
 env.bak/
 venv.bak/
