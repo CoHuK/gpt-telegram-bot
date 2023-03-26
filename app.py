@@ -146,7 +146,7 @@ async def handle_text(update: Update, context: CallbackContext):
     if allowed_user(user_id):
         chat_context = get_formatted_messages_for_gpt(user_id)
         chatgpt_response = get_chatgpt_response(user_text, chat_context)
-        store_message(update.message.from_user.id, str(update.message.id) + "a", "assistant", chatgpt_response)
+        store_message(update.message.from_user.id, str(int(update.message.id) + 1), "assistant", chatgpt_response)
         await update.message.reply_text(text=chatgpt_response,  parse_mode=ParseMode.MARKDOWN)
     else:
         await update.message.reply_text("You don't have permissions to use that bot!")
