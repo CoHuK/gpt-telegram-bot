@@ -20,6 +20,7 @@ if [ $# -eq 0 ]; then
   echo "Using the default config: .chalice/config.json"
 else
   CONFIG_NAME=$1
+  echo "Using config .chalice/${CONFIG_NAME}.config.json"
   # Check if the specified config file exists
   if [ ! -f ".chalice/${CONFIG_NAME}.config.json" ]; then
     echo "Config file .chalice/${CONFIG_NAME}.config.json not found."
@@ -27,7 +28,7 @@ else
   else
     # Copy the specified config file to .chalice/config.json
     mv .chalice/config.json .chalice/backup.config.json >/dev/null 2>&1 || true 
-    cp ".chalice/${CONFIG_NAME}.config.json" .chalice/config.json
+    cp -f ".chalice/${CONFIG_NAME}.config.json" .chalice/config.json
   fi
 fi
 
@@ -48,7 +49,8 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
           AttributeName=message_id,AttributeType=S \
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
-          AttributeName=message_id,KeyType=RANGE
+          AttributeName=message_id,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
     elif [ "$table_name" == "$DYNAMODB_USERS_TABLE_NAME" ]; then
       aws dynamodb create-table \
         --table-name "$table_name" \
@@ -57,7 +59,8 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
           AttributeName=user_type,AttributeType=S \
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
-          AttributeName=user_type,KeyType=RANGE
+          AttributeName=user_type,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
     fi
   else
     echo "DynamoDB table $table_name found!"
