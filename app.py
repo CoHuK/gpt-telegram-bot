@@ -6,6 +6,7 @@ import asyncio
 from chalice import Chalice
 from dotenv import load_dotenv
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import boto3
 
@@ -146,7 +147,7 @@ async def handle_text(update: Update, context: CallbackContext):
         chat_context = get_formatted_messages_for_gpt(user_id)
         chatgpt_response = get_chatgpt_response(user_text, chat_context)
         store_message(update.message.from_user.id, str(update.message.id) + "a", "assistant", chatgpt_response)
-        await update.message.reply_text(text=chatgpt_response)
+        await update.message.reply_text(text=chatgpt_response,  parse_mode=ParseMode.MARKDOWN)
     else:
         await update.message.reply_text("You don't have permissions to use that bot!")
 
