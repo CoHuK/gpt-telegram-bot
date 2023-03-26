@@ -93,7 +93,7 @@ if [ -z "$FUNCTION_URL" ]; then
 fi
 echo "Lambda Function URL: $FUNCTION_URL"
 
-"Add lambda:InvokeFunctionUrl permissions for Lambda function"
+echo "Add lambda:InvokeFunctionUrl permissions for Lambda function"
 aws lambda add-permission \
   --function-name $LAMBDA_ARN \
   --action lambda:InvokeFunctionUrl \
