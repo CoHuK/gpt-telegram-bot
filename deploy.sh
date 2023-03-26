@@ -50,7 +50,7 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
           AttributeName=message_id,KeyType=RANGE \
-        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+        --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
     elif [ "$table_name" == "$DYNAMODB_USERS_TABLE_NAME" ]; then
       aws dynamodb create-table \
         --table-name "$table_name" \
@@ -60,7 +60,7 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
           AttributeName=user_type,KeyType=RANGE \
-        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+        --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
     fi
   else
     echo "DynamoDB table $table_name found!"
