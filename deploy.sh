@@ -46,7 +46,7 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
         --table-name "$table_name" \
         --attribute-definitions \
           AttributeName=user_id,AttributeType=S \
-          AttributeName=message_id,AttributeType=S \
+          AttributeName=message_id,AttributeType=N \
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
           AttributeName=message_id,KeyType=RANGE \

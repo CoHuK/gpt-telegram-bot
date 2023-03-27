@@ -28,6 +28,7 @@ LAMBDA_MESSAGE_HANDLER = "lambda-message-handler"
 ADMIN_USER_KEY = "admin_user"
 TYPE_ITEM_MESSAGE = "message"
 TYPE_ITEM_USER = "allowed_user"
+CONTEXTS_FOLDER = "chalicelib"
 
 DEFAULT_GPT_MODEL = "gpt-3.5-turbo"
 
@@ -68,14 +69,31 @@ def _add_allowed_user(user_id, user_role):
             'user_type': str(user_role)
         }
     )
+    if user_role == TYPE_ITEM_USER:
+        load_contexts(user_id)
 
+def load_contexts(user_id):
+    filenames = get_json_filenames(CONTEXTS_FOLDER)
+    for file in filenames:
+        for i, context_line in enumerate(json_from_file(file)['context']):
+            store_message(user_id, i, context_line['role'], context_line['content'])
+
+def get_json_filenames(folder_path):
+    json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
+    return json_files
+
+def json_from_file(name):
+    filename = os.path.join(
+    os.path.dirname(__file__), 'chalicelib', name)
+    with open(filename) as f:
+        return json.load(f)
 
 # Messages
 def store_message(user_id, message_id, role, text):
     messages_table.put_item(
         Item={
             'user_id': str(user_id),
-            'message_id': str(message_id),
+            'message_id': int(message_id),
             'role': role,
             'text': text
         }
@@ -89,7 +107,7 @@ def delete_messages(user_id):
             batch.delete_item(
                 Key={
                     'user_id': str(user_id),
-                    'message_id': str(msg['message_id'])
+                    'message_id': int(msg['message_id'])
                 }
             )
 
@@ -194,10 +212,15 @@ async def handle_text(update: Update, context: CallbackContext):
         chat_context = get_formatted_messages_for_gpt(user_id)
         chatgpt_response, tokens_used = get_chatgpt_response(
             user_text, chat_context)
-        store_message(update.message.from_user.id, str(
-            int(update.message.id) + 1), "assistant", chatgpt_response)
-        await update.message.reply_text(text=chatgpt_response,  parse_mode=ParseMode.MARKDOWN)
+        store_message(update.message.from_user.id, int(update.message.id) + 1, "assistant", chatgpt_response)
+        if "image:" in chatgpt_response:
+            prompt = chatgpt_response.split(':')[1].split("\"")[0]
+            await update.message.reply_text(text=prompt)
+            await process_image(prompt, update)
+        else:
+            await update.message.reply_text(text=chatgpt_response,  parse_mode=ParseMode.MARKDOWN)
         await update.message.reply_text(text="Last request used " + str(tokens_used) + " tokens. It costed " + str(tokens_used * 0.002 / 1000) + " USD")
+        
     else:
         await update.message.reply_text("You don't have permissions to use that bot!")
 
@@ -229,17 +252,18 @@ async def clear(update: Update, context: CallbackContext):
 
 async def generate_image(update: Update, context: CallbackContext):
     user_id = str(update.message.from_user.id)
-    print(context.args)
     if allowed_user(user_id):
         prompt = " ".join(context.args).strip()
         if prompt:
-            image_url = get_generated_image(prompt)
-            await update.message.reply_html(image_url)
+            await process_image(prompt, update)
         else:
             await update.message.reply_text('Please provide the text prompt')
     else:
         await update.message.reply_text("You don't have permissions to use that bot!")
 
+async def process_image(prompt, update: Update):
+    image_url = get_generated_image(prompt)
+    await update.message.reply_html(image_url)
 
 ###################### MAIN ##########################################
 @app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)

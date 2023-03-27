@@ -10,7 +10,7 @@
 GPT Telegram Bot using AWS features
 
 - Lambda, DynamoDB (full auto deployment)
-- Fargate, ECS (manual Docker container deployment)
+- Fargate, ECS (manual Docker container deployment) Depricated
 
 ## Requirements
 
@@ -38,7 +38,7 @@ For voice processing you will need manually (will be automated in the next relea
 ## Features
 
 - Currently used openAI model: gpt-3.5-turbo-0301 (Just type any message)
-- Image generation `/image prompt`
+- Image generation `/image prompt` or just ask without the command!
 - Voice message transcript (Just send any voice message)
 - Context of your chat is saved until you use command `/clear`
 - Price in USD of the response is shown
