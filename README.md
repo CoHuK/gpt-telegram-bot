@@ -42,7 +42,4 @@ For voice processing you will need manually (will be automated in the next relea
 - Voice message transcript (Just send any voice message)
 - Context of your chat is saved until you use command `/clear`
 - Price in USD of the response is shown
-
-> :warning: Make sure to clean the context often, as the full context is sent with every message, so longer you talk about one topic to GPT, more expensive become the processing of the response.
-
 - Multi-config support: keep multiple chalice configs to deploy multiple bots `.chalice/name.config.json`
