@@ -126,3 +126,8 @@ echo "Set the Telegram Bot webhook"
 echo "url=${FUNCTION_URL}."
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" -d "url="
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" -d "url=${FUNCTION_URL}"
+
+echo ""
+echo "##################################"
+echo "Deployment finished successfuly!"
+echo "##################################"

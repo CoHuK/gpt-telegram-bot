@@ -29,6 +29,7 @@ ADMIN_USER_KEY = "admin_user"
 TYPE_ITEM_MESSAGE = "message"
 TYPE_ITEM_USER = "allowed_user"
 CONTEXTS_FOLDER = "chalicelib"
+NUMBER_OF_PREDEFINED_CONTEXT_MESSAGES = 1
 
 DEFAULT_GPT_MODEL = "gpt-3.5-turbo"
 
@@ -72,21 +73,25 @@ def _add_allowed_user(user_id, user_role):
     if user_role == TYPE_ITEM_USER:
         load_contexts(user_id)
 
+
 def load_contexts(user_id):
     filenames = get_json_filenames(CONTEXTS_FOLDER)
     for file in filenames:
         for i, context_line in enumerate(json_from_file(file)['context']):
             store_message(user_id, i, context_line['role'], context_line['content'])
 
+
 def get_json_filenames(folder_path):
     json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
     return json_files
+
 
 def json_from_file(name):
     filename = os.path.join(
     os.path.dirname(__file__), 'chalicelib', name)
     with open(filename) as f:
         return json.load(f)
+
 
 # Messages
 def store_message(user_id, message_id, role, text):
@@ -104,19 +109,20 @@ def delete_messages(user_id):
     messages = get_messages(user_id)
     with messages_table.batch_writer() as batch:
         for msg in messages:
-            batch.delete_item(
-                Key={
-                    'user_id': str(user_id),
-                    'message_id': int(msg['message_id'])
-                }
-            )
+            if int(msg['message_id']) > NUMBER_OF_PREDEFINED_CONTEXT_MESSAGES:
+                batch.delete_item(
+                    Key={
+                        'user_id': str(user_id),
+                        'message_id': int(msg['message_id'])
+                    }
+                )
 
 
 def get_messages(user_id):
     response = messages_table.query(
         KeyConditionExpression=boto3.dynamodb.conditions.Key(
             'user_id').eq(str(user_id))
-    )
+        )
     return response['Items']
 
 
