@@ -10,7 +10,7 @@
 GPT Telegram Bot using AWS features
 
 - Lambda, DynamoDB (full auto deployment)
-- Fargate, ECS (manual Docker container deployment) Depricated
+- ~~Fargate, ECS (manual Docker container deployment)~~ Depricated
 
 ## Requirements
 
