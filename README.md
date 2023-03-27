@@ -1,5 +1,7 @@
 # Telegram Bot with Chalice and AWS Lambda
 
+![2023-03-27 04 10 10](https://user-images.githubusercontent.com/1978717/227817754-219a8e0d-8a79-4cbb-8d1e-e348887bfa73.jpg)
+
 GPT Telegram Bot using AWS features
 
 - Lambda, DynamoDB (full auto deployment)
