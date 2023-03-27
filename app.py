@@ -1,8 +1,10 @@
 import os
+import io
 import json
 import openai
 import logging
 import asyncio
+from pydub import AudioSegment
 from chalice import Chalice
 from dotenv import load_dotenv
 from telegram import Update
@@ -30,6 +32,8 @@ LAMBDA_MESSAGE_HANDLER = "lambda-message-handler"
 ADMIN_USER_KEY = "admin_user"
 TYPE_ITEM_MESSAGE = "message"
 TYPE_ITEM_USER = "allowed_user"
+
+DEFAULT_GPT_MODEL = "gpt-3.5-turbo"
 
 
 # Initialize the OpenAI library
@@ -97,14 +101,36 @@ def get_messages(user_id):
 def get_chatgpt_response(prompt, chat_context):
     chat_context.append({"role": "user", "content": prompt})
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-0301",
+        model=DEFAULT_GPT_MODEL,
         messages=chat_context
     )
     response_text = response.choices[0].message.content.strip()
-    return response_text
+    tokens_used = response.usage.total_tokens
+    return response_text, tokens_used
 
 def get_formatted_messages_for_gpt(user_id):
     return [{"role": msg["role"], "content": msg["text"]} for msg in get_messages(user_id)]
+
+def get_generated_image(prompt, number_of_pictures=1, size="1024x1024"):
+    response = openai.Image.create(
+        prompt=prompt,
+        n=number_of_pictures,
+        size=size
+    )
+    return response['data'][0]['url']
+
+def transcribe(ogg_audio_bytes):
+    mp3_bytes = convert_ogg_to_mp3(ogg_audio_bytes)
+    mp3_bytes.name = "filename.mp3" # required by transcribe method
+    return openai.Audio.transcribe(model="whisper-1", file=mp3_bytes)['text']
+
+def convert_ogg_to_mp3(ogg_bytes):
+    audio_file = io.BytesIO(ogg_bytes)
+    # Read the OGG file from the message into an AudioSegment object
+    audio_data = AudioSegment.from_ogg(audio_file)
+    # Convert the audio to MP3 format
+    mp3_data = io.BytesIO(audio_data.export(format='mp3').read())
+    return mp3_data
 
 ################# GENERAL COMMANDS ##########################
 async def start(update: Update, context: CallbackContext):
@@ -145,17 +171,37 @@ async def handle_text(update: Update, context: CallbackContext):
     store_message(user_id, update.message.id, "user", user_text)
     if allowed_user(user_id):
         chat_context = get_formatted_messages_for_gpt(user_id)
-        chatgpt_response = get_chatgpt_response(user_text, chat_context)
+        chatgpt_response, tokens_used = get_chatgpt_response(user_text, chat_context)
         store_message(update.message.from_user.id, str(int(update.message.id) + 1), "assistant", chatgpt_response)
         await update.message.reply_text(text=chatgpt_response,  parse_mode=ParseMode.MARKDOWN)
+        await update.message.reply_text(text="Last request used " + str(tokens_used) + " tokens. It costed " + str(tokens_used * 0.002 / 1000) + " USD")
     else:
         await update.message.reply_text("You don't have permissions to use that bot!")
+
+async def voice_to_text(update: Update, context: CallbackContext):
+    voice = update.message.voice
+    # Assuming `voice_message` is a Telegram `Voice` message object
+    audio_file = voice.file_id
+
+    # Download the audio file from Telegram servers
+    file = await context.bot.get_file(audio_file)
+    audio_data = await file.download_as_bytearray()
+    text = transcribe(audio_data)
+    await update.message.reply_text(text)
 
 async def clear(update: Update, context: CallbackContext):
     delete_messages(update.message.from_user.id)
     logger.info("Context should be cleared by now")
     await update.message.reply_text('Context cleared')
 
+async def generate_image(update: Update, context: CallbackContext):
+    prompt = " ".join(context.args)
+    if prompt:
+        image_url = get_generated_image(prompt)
+        await update.message.reply_html(image_url)
+    else:
+        await update.message.reply_text('Please provide the text prompt')  
+    
 ###################### MAIN ##########################################
 @app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)
 def message_handler(event, context):
@@ -170,6 +216,8 @@ async def run_bot_application(event):
     application.add_handler(CommandHandler('add_user', add_user))
     application.add_handler(CommandHandler('users', users))
     application.add_handler(CommandHandler('delete_user', delete_user))
+    application.add_handler(CommandHandler('image', generate_image))
+    application.add_handler(MessageHandler(filters.VOICE, voice_to_text))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     print("Registered all the handlers")
     print("Try to initialise")

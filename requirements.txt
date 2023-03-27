@@ -2,3 +2,4 @@ python-dotenv
 python-telegram-bot
 openai
 boto3
+pydub

@@ -1,6 +1,7 @@
 # Telegram Bot with Chalice and AWS Lambda
 
 GPT Telegram Bot using AWS features
+
 - Lambda, DynamoDB (full auto deployment)
 - Fargate, ECS (manual Docker container deployment)
 
@@ -21,12 +22,20 @@ GPT Telegram Bot using AWS features
 
 4. Run the `deploy.sh` script to deploy the Telegram Bot to AWS Lambda (or `deploy.sh name` for a custom config)
 
+For voice processing you will need manually (will be automated in the next release):
+
+1. Upload ffmpeg.zip to your S3 bucket
+2. Create Lambda Layer using S3 URI
+3. Attach layer to your Lambda function
+
 ## Features
 
-- Currently used openAI model: gpt-3.5-turbo-0301
+- Currently used openAI model: gpt-3.5-turbo-0301 (Just type any message)
+- Image generation `/image prompt`
+- Voice message transcript (Just send any voice message)
 - Context of your chat is saved until you use command `/clear`
+- Price in USD of the response is shown
 
-**Warning**
 > :warning: Make sure to clean the context often, as the full context is sent with every message, so longer you talk about one topic to GPT, more expensive become the processing of the response.
 
 - Multi-config support: keep multiple chalice configs to deploy multiple bots `.chalice/name.config.json`
