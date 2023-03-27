@@ -1,4 +1,4 @@
-# Telegram Bot with Chalice and AWS Lambda
+# GPT Telegram Bot with easy deployment using Chalice to AWS Lambda
 <p align="left">
 <img
   src="https://user-images.githubusercontent.com/1978717/227817754-219a8e0d-8a79-4cbb-8d1e-e348887bfa73.jpg"
