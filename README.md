@@ -1,10 +1,11 @@
 # Telegram Bot with Chalice and AWS Lambda
-
+<p align="left">
 <img
   src="https://user-images.githubusercontent.com/1978717/227817754-219a8e0d-8a79-4cbb-8d1e-e348887bfa73.jpg"
   alt="Bot Demo"
   title="Happy Programmer"
-  style="display: inline-block; margin: 0 auto; max-width: 150px">
+  style="display: inline-block; margin: 0 auto; max-width: 150px; width: 324px; height: 657px">
+</p>
 
 GPT Telegram Bot using AWS features
 
