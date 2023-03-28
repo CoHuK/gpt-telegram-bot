@@ -1,4 +1,4 @@
-# GPT Telegram Bot with easy deployment using Chalice to AWS Lambda
+# GPT/Whisper/DALL-E Telegram Bot with easy deployment using Chalice to AWS Lambda
 <p align="left">
 <img
   src="https://user-images.githubusercontent.com/1978717/227817754-219a8e0d-8a79-4cbb-8d1e-e348887bfa73.jpg"
@@ -7,7 +7,7 @@
   style="display: inline-block; margin: 0 auto; max-width: 150px; width: 324px; height: 657px">
 </p>
 
-GPT Telegram Bot using AWS features
+GPT/Whisper/DALL-E Telegram Bot using AWS features
 
 - Lambda, DynamoDB (full auto deployment)
 - ~~Fargate, ECS (manual Docker container deployment)~~ Depricated
