@@ -130,4 +130,3 @@ curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" -
 echo ""
 echo "##################################"
 echo "Deployment finished successfuly!"
-echo "##################################"
