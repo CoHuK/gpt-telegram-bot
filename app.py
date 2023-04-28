@@ -35,7 +35,8 @@ PERMISSION_ERROR_TEXT = "You don't have permissions to use that bot!"
 CALLBACK_CORRECT_TRANSCRIPT = "correct_transcript"
 VOICE_PROCESSING_KEYBOARD = [[InlineKeyboardButton(text = "Correct! Send it to GPT!", callback_data=CALLBACK_CORRECT_TRANSCRIPT)]]
 
-DEFAULT_GPT_MODEL = "gpt-3.5-turbo"
+DEFAULT_GPT_MODEL = "gpt-4" # "gpt-3.5-turbo"
+PRICE_PER_1000_TOKENS = 0.06
 DEFAULT_WHISPER_MODEL = "whisper-1"
 
 
@@ -250,7 +251,7 @@ async def handle_text(update: Update, context: CallbackContext):
     if allowed_user(user_id):
         response_text, tokens_used = process_text(user_text, user_id, update.message.id)
         await update.message.reply_text(text=response_text,  parse_mode=ParseMode.MARKDOWN)
-        await update.message.reply_text(text="Last request used " + str(tokens_used) + " tokens. It costed " + str(tokens_used * 0.002 / 1000) + " USD")
+        await update.message.reply_text(text="Last request used " + str(tokens_used) + " tokens. It costed " + str(tokens_used * PRICE_PER_1000_TOKENS / 1000) + " USD")
     else:
         await update.message.reply_text(PERMISSION_ERROR_TEXT)
 
