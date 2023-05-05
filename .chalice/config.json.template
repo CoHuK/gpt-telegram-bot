@@ -7,7 +7,9 @@
     "TELEGRAM_API_TOKEN": "",
     "BOT_ADMIN_USER_ID": "",
     "DYNAMODB_TABLE_NAME": "gpt-telegram-bot-messages",
-    "DYNAMODB_USERS_TABLE_NAME": "gpt-telegram-bot-users"
+    "DYNAMODB_USERS_TABLE_NAME": "gpt-telegram-bot-users",
+    "DYNAMODB_CONFIG_TABLE_NAME": "gpt-telegram-bot-config",
+    "DYNAMODB_SPENDINGS_TABLE_NAME": "gpt-telegram-bot-spendings"
   },
   "stages": {
     "dev": {

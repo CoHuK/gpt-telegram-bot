@@ -36,9 +36,11 @@ fi
 # Get DynamoDB table names from the config file
 DYNAMODB_TABLE_NAME=$(jq -r '.environment_variables.DYNAMODB_TABLE_NAME' .chalice/config.json)
 DYNAMODB_USERS_TABLE_NAME=$(jq -r '.environment_variables.DYNAMODB_USERS_TABLE_NAME' .chalice/config.json)
+DYNAMODB_CONFIG_TABLE_NAME=$(jq -r '.environment_variables.DYNAMODB_CONFIG_TABLE_NAME' .chalice/config.json)
+DYNAMODB_SPENDINGS_TABLE_NAME=$(jq -r '.environment_variables.DYNAMODB_SPENDINGS_TABLE_NAME' .chalice/config.json)
 
 # Check and create DynamoDB tables if they don't exist
-for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
+for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME" "$DYNAMODB_CONFIG_TABLE_NAME" "$DYNAMODB_SPENDINGS_TABLE_NAME"; do
   if ! aws dynamodb describe-table --table-name "$table_name" >/dev/null 2>&1; then
     echo "Creating table $table_name"
     if [ "$table_name" == "$DYNAMODB_TABLE_NAME" ]; then
@@ -60,6 +62,24 @@ for table_name in "$DYNAMODB_TABLE_NAME" "$DYNAMODB_USERS_TABLE_NAME"; do
         --key-schema \
           AttributeName=user_id,KeyType=HASH \
           AttributeName=user_type,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+    elif [ "$table_name" == "$DYNAMODB_CONFIG_TABLE_NAME" ]; then
+      aws dynamodb create-table \
+        --table-name "$table_name" \
+        --attribute-definitions \
+          AttributeName=user_id,AttributeType=S \
+        --key-schema \
+          AttributeName=user_id,KeyType=HASH \
+        --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+    elif [ "$table_name" == "$DYNAMODB_SPENDINGS_TABLE_NAME" ]; then
+      aws dynamodb create-table \
+        --table-name "$table_name" \
+        --attribute-definitions \
+          AttributeName=user_id,AttributeType=S \
+          AttributeName=timestamp,AttributeType=N \
+        --key-schema \
+          AttributeName=user_id,KeyType=HASH \
+          AttributeName=timestamp,KeyType=RANGE \
         --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
     fi
   else
@@ -125,6 +145,7 @@ TELEGRAM_API_TOKEN=$(jq -r '.environment_variables.TELEGRAM_API_TOKEN' .chalice/
 echo "Set the Telegram Bot webhook"
 echo "url=${FUNCTION_URL}."
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" -d "url="
+echo ""
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" -d "url=${FUNCTION_URL}"
 
 echo ""
