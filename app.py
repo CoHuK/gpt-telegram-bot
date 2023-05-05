@@ -44,7 +44,7 @@ VOICE_PROCESSING_KEYBOARD = [[InlineKeyboardButton(text = "Correct! Send it to G
 MODELS = {"gpt3": {"model": "gpt-3.5-turbo", "request_price": 2, "response_price": 2},
           "gpt4": {"model": "gpt-4", "response_price": 60, "request_price": 20}}
 IMAGE_MODELS = {"dall-e": {"model": "dall-e", "response_price": 20}}
-VOICE_MODELS = {"whisper": {"model": "whisper-1", "price_per_second": 6}}
+VOICE_MODELS = {"whisper": {"model": "whisper-1", "price_per_minute": 6}}
 DEFAULT_WHISPER_MODEL = "whisper-1"
 
 
@@ -373,10 +373,10 @@ async def voice_to_text(update: Update, context: CallbackContext):
         file = await context.bot.get_file(audio_file)
         audio_data = await file.download_as_bytearray()
         text = transcribe(audio_data)
-        processing_cost = duration * VOICE_MODELS["whisper"]["price_per_second"]
-        add_image_voice_spending(user_id, processing_cost, VOICE_MODELS["whisper"])
+        processing_cost = duration * VOICE_MODELS["whisper"]["price_per_minute"]
+        add_image_voice_spending(user_id, processing_cost, VOICE_MODELS["whisper"]["model"])
         reply_markup = InlineKeyboardMarkup(VOICE_PROCESSING_KEYBOARD)
-        await update.message.reply_text(text + "\n" + "Is that what you told? \n Processing costed: " + str(processing_cost / 1000), reply_markup=reply_markup)
+        await update.message.reply_text(text + "\n" + "Is that what you told? \n Processing costed: " + str(processing_cost / 1000 / 60) + " USD", reply_markup=reply_markup)
     else:
         await update.message.reply_text(PERMISSION_ERROR_TEXT)
 
