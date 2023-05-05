@@ -33,13 +33,13 @@ ADMIN_USER_KEY = "admin_user"
 TYPE_ITEM_MESSAGE = "message"
 TYPE_ITEM_USER = "allowed_user"
 CONTEXTS_FOLDER = "chalicelib"
-NUMBER_OF_PREDEFINED_CONTEXT_MESSAGES = 1 # TODO: Will be dynamic
+NUMBER_OF_PREDEFINED_CONTEXT_MESSAGES = 1  # TODO: Will be dynamic
 PERMISSION_ERROR_TEXT = "You don't have permissions to use that bot!"
 
 CALLBACK_CORRECT_TRANSCRIPT = "correct_transcript"
 CALLBACK_WRONG_TRANSCRIPT = "wrong_transcript"
-VOICE_PROCESSING_KEYBOARD = [[InlineKeyboardButton(text = "Correct! Send it to GPT!", callback_data=CALLBACK_CORRECT_TRANSCRIPT)],
-                             [InlineKeyboardButton(text = "No, I'll copy and edit myself", callback_data=CALLBACK_WRONG_TRANSCRIPT)]]
+VOICE_PROCESSING_KEYBOARD = [[InlineKeyboardButton(text="Correct! Send it to GPT!", callback_data=CALLBACK_CORRECT_TRANSCRIPT)],
+                             [InlineKeyboardButton(text="No, I'll copy and edit myself", callback_data=CALLBACK_WRONG_TRANSCRIPT)]]
 
 MODELS = {"gpt3": {"model": "gpt-3.5-turbo", "request_price": 2, "response_price": 2},
           "gpt4": {"model": "gpt-4", "response_price": 60, "request_price": 20}}
@@ -50,7 +50,9 @@ DEFAULT_WHISPER_MODEL = "whisper-1"
 
 # Initialize the OpenAI library
 openai.api_key = OPENAI_API_KEY
+# Initialize the Chalice app
 app = Chalice(app_name=APP_NAME)
+# Connect to DynamoDB
 dynamodb = boto3.resource("dynamodb")
 messages_table = dynamodb.Table(DYNAMODB_TABLE)
 users_table = dynamodb.Table(DYNAMODB_USER_TABLE)
@@ -63,12 +65,14 @@ def get_price(tokens, user_id):
     model = get_config(user_id)
     return tokens["completion_tokens"] * model["response_price"] / 1000 / 1000 + tokens["prompt_tokens"] * model["request_price"] / 1000 / 1000
 
+
 # Context
 def load_contexts(user_id):
     filenames = get_json_filenames(CONTEXTS_FOLDER)
     for file in filenames:
         for i, context_line in enumerate(json_from_file(file)["context"]):
-            store_message(user_id, i, context_line["role"], context_line["content"])
+            store_message(
+                user_id, i, context_line["role"], context_line["content"])
 
 
 def get_json_filenames(folder_path):
@@ -78,7 +82,7 @@ def get_json_filenames(folder_path):
 
 def json_from_file(name):
     filename = os.path.join(
-    os.path.dirname(__file__), "chalicelib", name)
+        os.path.dirname(__file__), "chalicelib", name)
     with open(filename) as f:
         return json.load(f)
 
@@ -143,7 +147,7 @@ def get_messages(user_id):
     response = messages_table.query(
         KeyConditionExpression=boto3.dynamodb.conditions.Key(
             "user_id").eq(str(user_id))
-        )
+    )
     return response["Items"]
 
 
@@ -205,6 +209,7 @@ def update_config(user_id, model):
         ReturnValues="UPDATED_NEW"
     )
 
+
 def delete_config(user_id):
     config_table.delete_item(
         Key={
@@ -228,6 +233,7 @@ def add_spending(user_id, tokens_spent, model_name):
         }
     )
 
+
 def add_image_voice_spending(user_id, price, model_name):
     timestamp = int(time.time())
     spendings_table.put_item(
@@ -239,7 +245,19 @@ def add_image_voice_spending(user_id, price, model_name):
             "human_readable_time": datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         }
     )
-    
+
+
+def get_spendings_for_user(user_id):
+    sum = 0
+    spending_items = spendings_table.query(
+        KeyConditionExpression=boto3.dynamodb.conditions.Key(
+            "user_id").eq(str(user_id))
+    )["Items"]
+    for item in spending_items:
+        sum += item["price_in_10th_of_cents"]
+    return sum / 1000
+
+
 ######################## CHAT GPT MESSAGES PROCESSING ################################
 # Function to get a response from ChatGPT
 def get_chatgpt_response(prompt, chat_context, model_name="gpt-3.5-turbo"):
@@ -254,7 +272,8 @@ def get_chatgpt_response(prompt, chat_context, model_name="gpt-3.5-turbo"):
     prompt_tokens = response.usage.prompt_tokens
     completion_tokens = response.usage.completion_tokens
     total_tokens = response.usage.total_tokens
-    print("Total tokens: " + str(total_tokens) + " Prompt tokens: " + str(prompt_tokens) + " Completion tokens: " + str(completion_tokens))
+    print("Total tokens: " + str(total_tokens) + " Prompt tokens: " +
+          str(prompt_tokens) + " Completion tokens: " + str(completion_tokens))
     return response_text, {"total_tokens": total_tokens, "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
 
 
@@ -262,7 +281,8 @@ def process_text(user_text, user_id, message_id):
     chat_context = get_formatted_messages_for_gpt(user_id)
     model_name = get_config(user_id)["model"]
     print("Model will be used: " + model_name)
-    response, tokens = get_chatgpt_response(user_text, chat_context, model_name)
+    response, tokens = get_chatgpt_response(
+        user_text, chat_context, model_name)
     add_spending(user_id, tokens, model_name)
     store_message(user_id, int(message_id) + 1, "assistant", response, tokens)
     # if "image:" in response:
@@ -353,7 +373,8 @@ async def handle_text(update: Update, context: CallbackContext):
     user_id = str(update.message.from_user.id)
     store_message(user_id, update.message.id, "user", user_text)
     if allowed_user(user_id):
-        response_text, tokens = process_text(user_text, user_id, update.message.id)
+        response_text, tokens = process_text(
+            user_text, user_id, update.message.id)
         await update.message.reply_text(text=response_text,  parse_mode=ParseMode.MARKDOWN)
         print("Price: " + str(get_price(tokens, user_id)))
         await update.message.reply_text(text="Last request used " + str(tokens["total_tokens"]) + " tokens. It costed " + str(get_price(tokens, user_id)) + " USD")
@@ -373,12 +394,15 @@ async def voice_to_text(update: Update, context: CallbackContext):
         file = await context.bot.get_file(audio_file)
         audio_data = await file.download_as_bytearray()
         text = transcribe(audio_data)
-        processing_cost = duration * VOICE_MODELS["whisper"]["price_per_minute"]
-        add_image_voice_spending(user_id, processing_cost, VOICE_MODELS["whisper"]["model"])
+        processing_cost = duration * \
+            VOICE_MODELS["whisper"]["price_per_minute"]
+        add_image_voice_spending(
+            user_id, processing_cost, VOICE_MODELS["whisper"]["model"])
         reply_markup = InlineKeyboardMarkup(VOICE_PROCESSING_KEYBOARD)
         await update.message.reply_text(text + "\n" + "Is that what you told? \n Processing costed: " + str(processing_cost / 1000 / 60) + " USD", reply_markup=reply_markup)
     else:
         await update.message.reply_text(PERMISSION_ERROR_TEXT)
+
 
 # /clear handler
 async def clear(update: Update, context: CallbackContext):
@@ -399,12 +423,14 @@ async def generate_image(update: Update, context: CallbackContext):
         if prompt:
             url = get_generated_image(prompt)
             await update.message.reply_html(url)
-            add_image_voice_spending(user_id, IMAGE_MODELS["dall-e"]["response_price"], IMAGE_MODELS["dall-e"]["model"])
+            add_image_voice_spending(
+                user_id, IMAGE_MODELS["dall-e"]["response_price"], IMAGE_MODELS["dall-e"]["model"])
             await update.message.reply_text("Image generation costed:" + str(IMAGE_MODELS["dall-e"]["response_price"]/1000) + " USD")
         else:
             await update.message.reply_text("Please provide the text prompt")
     else:
         await update.message.reply_text(PERMISSION_ERROR_TEXT)
+
 
 # /model handler
 async def choose_model(update: Update, context: CallbackContext):
@@ -423,6 +449,14 @@ async def choose_model(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("Your current model is: " + get_config(user_id)["model"] + "\n" + PERMISSION_ERROR_TEXT)
 
+
+# spendings handler
+async def get_total_spending(update: Update, context: CallbackContext):
+    user_id = str(update.message.from_user.id)
+    spending = get_spendings_for_user(user_id)
+    await update.message.reply_text("Your total spendings: " + str(spending) + " USD")
+
+
 # Callback handler
 async def process_callback(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -440,7 +474,8 @@ async def process_callback(update: Update, context: CallbackContext):
         await context.bot.send_message(chat_id=chat_id, text="Last request used " + str(tokens_used.total_tokens) + " tokens. It costed " + str(get_price(tokens_used)) + " USD")
     elif query.data == CALLBACK_WRONG_TRANSCRIPT:
         pass
-     
+
+
 ###################### MAIN ##########################################
 @app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)
 def message_handler(event, context):
@@ -460,6 +495,7 @@ async def run_bot_application(event):
     application.add_handler(CommandHandler("delete_user", delete_user))
     application.add_handler(CommandHandler("image", generate_image))
     application.add_handler(CommandHandler("model", choose_model))
+    application.add_handler(CommandHandler("spendings", get_total_spending))
     application.add_handler(MessageHandler(filters.VOICE, voice_to_text))
     application.add_handler(CallbackQueryHandler(process_callback))
     application.add_handler(MessageHandler(
