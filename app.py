@@ -258,6 +258,20 @@ def get_spendings_for_user(user_id):
     return sum / 1000
 
 
+def get_all_spendings():
+    spending_items = spendings_table.scan()["Items"]
+    spendings_by_user = {}
+    for item in spending_items:
+        user_id = item['user_id']
+        spendings = item['price_in_10th_of_cents']
+
+        if user_id not in spendings_by_user:
+            spendings_by_user[user_id] = 0
+
+        spendings_by_user[user_id] += spendings
+    return spending_items
+
+
 ######################## CHAT GPT MESSAGES PROCESSING ################################
 # Function to get a response from ChatGPT
 def get_chatgpt_response(prompt, chat_context, model_name="gpt-3.5-turbo"):
@@ -268,6 +282,7 @@ def get_chatgpt_response(prompt, chat_context, model_name="gpt-3.5-turbo"):
         model=model_name,
         messages=chat_context
     )
+    print("Model from OpenAI response: " + response.model)
     response_text = response.choices[0].message.content.strip()
     prompt_tokens = response.usage.prompt_tokens
     completion_tokens = response.usage.completion_tokens
@@ -456,6 +471,17 @@ async def get_total_spending(update: Update, context: CallbackContext):
     await update.message.reply_text("Your total spendings: " + str(spending) + " USD")
 
 
+# all spendings handler
+async def get_all_users_spending(update: Update, context: CallbackContext):
+    user_id = str(update.message.from_user.id)
+    if user_id == ADMIN_ID:
+        spendings_by_user = get_all_spendings()
+        for user_id, total_spendings in spendings_by_user.items():
+            await update.message.reply_text(f"User_id {user_id}: total spendings {total_spendings / 1000} USD")
+    else:
+        await update.message.reply_text(PERMISSION_ERROR_TEXT)
+
+
 # Callback handler
 async def process_callback(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -495,6 +521,7 @@ async def run_bot_application(event):
     application.add_handler(CommandHandler("image", generate_image))
     application.add_handler(CommandHandler("model", choose_model))
     application.add_handler(CommandHandler("spendings", get_total_spending))
+    application.add_handler(CommandHandler("spendings_all", get_all_users_spending))
     application.add_handler(MessageHandler(filters.VOICE, voice_to_text))
     application.add_handler(CallbackQueryHandler(process_callback))
     application.add_handler(MessageHandler(
