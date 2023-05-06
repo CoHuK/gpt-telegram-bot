@@ -1,3 +1,4 @@
+import math
 import os
 import io
 import time
@@ -227,7 +228,7 @@ def add_spending(user_id, tokens_spent, model_name):
             "timestamp": timestamp,
             "completion_tokens": int(tokens_spent["completion_tokens"]),
             "prompt_tokens": int(tokens_spent["prompt_tokens"]),
-            "price_in_10th_of_cents": int(get_price(tokens_spent, user_id) * 1000),
+            "price_in_10th_of_cents": math.ceil(get_price(tokens_spent, user_id) * 1000),
             "model_name": model_name,
             "human_readable_time": datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -409,7 +410,7 @@ async def voice_to_text(update: Update, context: CallbackContext):
         file = await context.bot.get_file(audio_file)
         audio_data = await file.download_as_bytearray()
         text = transcribe(audio_data)
-        processing_cost = int(duration * VOICE_MODELS["whisper"]["price_per_minute"] / 60)
+        processing_cost = math.ceil()(duration * VOICE_MODELS["whisper"]["price_per_minute"] / 60)
         add_image_voice_spending(
             user_id, processing_cost, VOICE_MODELS["whisper"]["model"])
         reply_markup = InlineKeyboardMarkup(VOICE_PROCESSING_KEYBOARD)
