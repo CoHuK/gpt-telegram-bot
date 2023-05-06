@@ -410,7 +410,7 @@ async def voice_to_text(update: Update, context: CallbackContext):
         file = await context.bot.get_file(audio_file)
         audio_data = await file.download_as_bytearray()
         text = transcribe(audio_data)
-        processing_cost = math.ceil()(duration * VOICE_MODELS["whisper"]["price_per_minute"] / 60)
+        processing_cost = math.ceil(duration * VOICE_MODELS["whisper"]["price_per_minute"] / 60)
         add_image_voice_spending(
             user_id, processing_cost, VOICE_MODELS["whisper"]["model"])
         reply_markup = InlineKeyboardMarkup(VOICE_PROCESSING_KEYBOARD)
