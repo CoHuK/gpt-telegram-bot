@@ -269,7 +269,7 @@ def get_all_spendings():
             spendings_by_user[user_id] = 0
 
         spendings_by_user[user_id] += spendings
-    return spending_items
+    return spendings_by_user
 
 
 ######################## CHAT GPT MESSAGES PROCESSING ################################
