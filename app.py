@@ -477,7 +477,7 @@ async def get_all_users_spending(update: Update, context: CallbackContext):
     if user_id == ADMIN_ID:
         spendings_by_user = get_all_spendings()
         for user_id, total_spendings in spendings_by_user.items():
-            await update.message.reply_text(f"User_id {user_id}: total spendings {total_spendings / 1000} USD")
+            await update.message.reply_text(f"{user_id}: total spendings {total_spendings / 1000} USD")
     else:
         await update.message.reply_text(PERMISSION_ERROR_TEXT)
 
