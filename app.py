@@ -497,7 +497,7 @@ async def process_callback(update: Update, context: CallbackContext):
     if query.data == CALLBACK_CORRECT_TRANSCRIPT:
         response, tokens_used = process_text(message, user_id, message_id)
         await context.bot.send_message(chat_id=chat_id, text=response)
-        await context.bot.send_message(chat_id=chat_id, text="Last request used " + str(tokens_used.total_tokens) + " tokens. It costed " + str(get_price(tokens_used)) + " USD")
+        await context.bot.send_message(chat_id=chat_id, text="Last request used " + str(tokens_used["total_tokens"]) + " tokens. It costed " + str(get_price(tokens_used)) + " USD")
     elif query.data == CALLBACK_WRONG_TRANSCRIPT:
         pass
 
