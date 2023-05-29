@@ -506,7 +506,7 @@ async def process_callback(update: Update, context: CallbackContext):
 @app.lambda_function(name=LAMBDA_MESSAGE_HANDLER)
 def message_handler(event, context):
     if not is_config_present(ADMIN_ID):
-        create_initial_config(ADMIN_ID)
+        create_initial_config(ADMIN_ID, MODELS["gpt3"])
     _add_allowed_user(ADMIN_ID, ADMIN_USER_KEY)
     _add_allowed_user(ADMIN_ID, TYPE_ITEM_USER)
     return asyncio.run(run_bot_application(event))
